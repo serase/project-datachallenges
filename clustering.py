@@ -18,7 +18,7 @@ def cluster(st, df, method, name):
     else:
         df = df.head(5000)
     st.write(f"Running {method}")
-    fname = f"cluster_{method}_{name}.pkl"
+    fname = f"data/cluster_{method}_{name}.pkl"
     if os.path.isfile(fname):
         df = pd.read_pickle(fname)
     else:

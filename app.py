@@ -80,7 +80,7 @@ elif page == "Subspace Clustering":
     st.write("Trying after imputation")
     df = pd.read_pickle('data/imputed_linear_default.pkl')
     run_subspace_cluster(st, df, 'ensc', 'imputed')
-    # df = pd.read_pickle('imputed_linear_default.pkl')
+    # df = pd.read_pickle('data/imputed_linear_default.pkl')
     # run_subspace_cluster(st, df, 'Spectral', 'imputed')
 
 elif page == "Imbalanced Learning":

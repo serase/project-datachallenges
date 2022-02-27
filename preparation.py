@@ -16,4 +16,4 @@ for i, f in enumerate(files):
 
 df = pd.concat(df_list)
 df = df.reset_index(drop=True)
-df.to_pickle('data.pkl')
+df.to_pickle('data/data.pkl')

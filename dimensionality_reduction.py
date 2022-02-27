@@ -90,7 +90,7 @@ def dimensionality_reduction(st, df, method='PaCMAP'):
 def run_dr(st, input_df, name):
     for impute_method in ['linear', 'none']:
         df = input_df.copy()
-        fname_impute = f'imputed_{impute_method}_{name}.pkl'
+        fname_impute = f'data/imputed_{impute_method}_{name}.pkl'
         if os.path.isfile(fname_impute):
             df = pd.read_pickle(fname_impute)
             sc = joblib.load(f'{impute_method}_{name}_scaler.bin')
@@ -103,7 +103,7 @@ def run_dr(st, input_df, name):
             joblib.dump(sc, f'{impute_method}_{name}_scaler.bin', compress=True)
 
         for dr_method in ['PaCMAP', 'TriMAP']:
-            fname_dr = f'dr_{impute_method}_{dr_method}_{name}.pkl'
+            fname_dr = f'data/dr_{impute_method}_{dr_method}_{name}.pkl'
             if os.path.isfile(fname_dr):
                 feature_df = pd.read_pickle(fname_dr)
             else:

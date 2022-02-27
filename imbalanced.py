@@ -39,8 +39,8 @@ def classify(st, df, name, method):
     test_df = df.iloc[train_size+1:,:]
     train_df, train_sc = dimensionality_reduction.impute_data(st, train_df, method='linear')
     test_df, test_sc = dimensionality_reduction.impute_data(st, test_df, method='linear')
-    train_df.to_pickle(f"classifier_imputed_train_{method}_{name}.pkl")
-    test_df.to_pickle(f"classifier_imputed_test_{method}_{name}")
+    train_df.to_pickle(f"data/classifier_imputed_train_{method}_{name}.pkl")
+    test_df.to_pickle(f"data/classifier_imputed_test_{method}_{name}")
     df.dropna(inplace=True)
     neigh = KNeighborsClassifier(n_neighbors=3)
     neigh.fit(train_df.drop(['SepsisLabel'], axis=1), train_df['SepsisLabel'].values)

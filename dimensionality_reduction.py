@@ -40,8 +40,8 @@ def impute_data(st, df, method='linear'): # https://stackoverflow.com/questions/
 def remove_correlated(st, df):
     fig = plt.figure(figsize=(16, 6))
     # Remove upper triangle
-    mask = np.triu(np.ones_like(df.corr(), dtype=np.bool))
-    heatmap = sns.heatmap(df.corr(), mask=mask, vmin=-1, vmax=1, annot=True, cmap='viridis')
+    mask = np.triu(np.ones_like(df.corr().abs(), dtype=np.bool))
+    heatmap = sns.heatmap(df.corr().abs(), mask=mask, vmin=-1, vmax=1, annot=True, cmap='viridis')
     heatmap.set_title('Correlation Matrix');
     st.pyplot(fig)
     abs_matrix = df.corr().abs()
@@ -93,14 +93,14 @@ def run_dr(st, input_df, name):
         fname_impute = f'data/imputed_{impute_method}_{name}.pkl'
         if os.path.isfile(fname_impute):
             df = pd.read_pickle(fname_impute)
-            sc = joblib.load(f'{impute_method}_{name}_scaler.bin')
+            sc = joblib.load(f'data/{impute_method}_{name}_scaler.bin')
         else:
             if impute_method != 'none':
                 df, sc = impute_data(st, df, method=impute_method)
             else:
                 df, sc = scale(st, df)
             df.to_pickle(fname_impute)
-            joblib.dump(sc, f'{impute_method}_{name}_scaler.bin', compress=True)
+            joblib.dump(sc, f'data/{impute_method}_{name}_scaler.bin', compress=True)
 
         for dr_method in ['PaCMAP', 'TriMAP']:
             fname_dr = f'data/dr_{impute_method}_{dr_method}_{name}.pkl'

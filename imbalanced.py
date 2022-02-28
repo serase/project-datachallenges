@@ -43,6 +43,11 @@ def classify(st, df, name, method):
     test_df.to_pickle(f"data/classifier_imputed_test_{method}_{name}")
     df.dropna(inplace=True)
     neigh = KNeighborsClassifier(n_neighbors=3)
+    try:
+        train_df.drop('patient', axis=1, inplace=True)
+        test_df.drop('patient', axis=1, inplace=True)
+    except Exception:
+        print('patient not found in columns')
     neigh.fit(train_df.drop(['SepsisLabel'], axis=1), train_df['SepsisLabel'].values)
     y_pred = neigh.predict(test_df.drop(['SepsisLabel'], axis=1))
     y_true = test_df['SepsisLabel'].values

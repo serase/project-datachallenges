@@ -5,10 +5,10 @@ import dimensionality_reduction
 import clustering
 import subspace_clustering
 import imbalanced
-
+import time_series
 
 st.write("Data Challenges")
-# st.write("Wessel van de Goor")
+st.write("Wessel van de Goor")
 
 @st.cache(allow_output_mutation=True, suppress_st_warning=True)
 def load_data():
@@ -40,7 +40,7 @@ def run_imbalanced(st, df, name):
     return imbalanced.run_imbalanced(st, df, name)
 
 def run_time_series(st, df, name):
-    return None
+    return time_series.run_ts(st, df)
 
 df_start = load_data()
 df = df_start.copy()
@@ -77,6 +77,11 @@ elif page == "Subspace Clustering":
     run_subspace_cluster(st, df, 'ensc', 'full')
     # df = df_start.copy()
     # run_subspace_cluster(st, df, 'Spectral', 'full')
+    st.write("Let's try subspace clustering after feature selection")
+    df = dimensionality_reduction.feature_selection(st, df)
+    run_subspace_cluster(st, df, 'ensc', 'selected')
+    # df = dimensionality_reduction.feature_selection(st, df)
+    # run_subspace_cluster(st, df, 'Spectral', 'selected')
     st.write("Trying after imputation")
     df = pd.read_pickle('data/imputed_linear_default.pkl')
     run_subspace_cluster(st, df, 'ensc', 'imputed')
@@ -88,5 +93,8 @@ elif page == "Imbalanced Learning":
     run_imbalanced(st, df, 'selected')
 
 elif page == "Time Series Classification":
-    print("See other file")
+    df = pd.read_pickle('data/data.pkl')
+    df, sc = dimensionality_reduction.impute_data(st, df)
+    run_time_series(st, df, 'imputed')
+
 

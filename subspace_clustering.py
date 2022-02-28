@@ -36,13 +36,16 @@ def subspace_cluster(st, df, method, name):
         b= average inter-cluster distance i.e the average distance between all clusters."""
         # st.write(sh_explanation)
         image_name = f"images/subspace_cluster_{name}_{method}_parameter.png"
+        comb_file = f"data/subspace_cluster_{name}_{method}_best.txt"
+        try:
+            df.drop('patient', axis=1, inplace=True)
+        except Exception:
+            print('patient not found in columns')
 
         if os.path.isfile(image_name):
             st.image(image_name)
-            if method == 'ensc':
-                best_comb = '3|4'
-            elif method == 'Spectral':
-                best_comb = 3
+            with open(comb_file, 'r') as f:
+                best_comb = f.readline()
         else:
             # Create empty lists
             S = [] # this is to store Silhouette scores
@@ -89,7 +92,9 @@ def subspace_cluster(st, df, method, name):
                 plt.savefig(image_name)
                 st.pyplot(plt)
             max_index = S.index(max(S))
-            best_comb  = comb[max_index]
+            best_comb = comb[max_index]
+            with open(comb_file, 'w') as f:
+                f.write(best_comb)
         st.write(f"The best performing model: {best_comb}")
         if method == 'ensc':
             model = ElasticNetSubspaceClustering(n_clusters=int(best_comb.split("|")[0]),
@@ -99,7 +104,7 @@ def subspace_cluster(st, df, method, name):
             result = model.fit(df.drop(['SepsisLabel'], axis=1))
             df['cluster'] = result.labels_
         if method == 'Spectral':
-            model = SpectralBiclustering(n_clusters=best_comb, random_state=0)
+            model = SpectralBiclustering(n_clusters=int(best_comb), random_state=0)
             result = model.fit(df.drop(['SepsisLabel'], axis=1))
             df['cluster'] = result.row_labels_
         df = df.sort_values(by=['SepsisLabel'])
@@ -109,14 +114,14 @@ def subspace_cluster(st, df, method, name):
 def analyze_cluster(st, df):
     st.write("Do we see a correlation with the label to find out if there are any clusters to be found")
     fig = plt.figure(figsize=(16, 6))
-    mask = np.triu(np.ones_like(df.corr(), dtype=np.bool))
-    corr = df.corr()
+    mask = np.triu(np.ones_like(df.corr().abs(), dtype=np.bool))
+    corr = df.corr().abs()
     heatmap = sns.heatmap(corr, mask=mask, vmin=-1, vmax=1, annot=True, cmap='viridis')
     heatmap.set_title('Correlation Heatmap')
     st.pyplot(fig)
     highest_corr = list(corr['cluster'].nlargest(4).index)
     highest_corr.remove('cluster')
-    st.write(f"The 3 features who are correlating the best with cluster are: {(',').join(highest_corr)}'")
+    st.write(f"The 3 features who are correlating the best with cluster are: {(',').join(highest_corr)}")
 
     # Create a 3D scatter plot
     fig = px.scatter_3d(df, x=df[highest_corr[0]], y=df[highest_corr[1]], z=df[highest_corr[2]],

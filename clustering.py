@@ -40,21 +40,20 @@ def cluster(st, df, method, name):
         # st.write(sh_explanation)
 
         image_name = f"images/cluster_{name}_{method}_parameter.png"
+        comb_file = f"data/cluster_{name}_{method}_best.txt"
 
         if os.path.isfile(image_name):
             st.image(image_name)
-            if method == 'DBSCAN':
-                best_comb = '29|4'
-            elif method == 'k-means':
-                best_comb = 3
+            with open(comb_file, 'r') as f:
+                best_comb = f.readline()
         else:
             # Create empty lists
             S = [] # this is to store Silhouette scores
             comb = [] #` this is to store combinations of epsilon / min_samples
             if method == 'DBSCAN':
                 # Define ranges to explore
-                eps_range = range(12,30) # note, we will scale this down by 100 as we want to explore 0.06 - 0.11 range
-                minpts_range = range(3,5)
+                eps_range = range(20,30) # note, we will scale this down by 100 as we want to explore 0.06 - 0.11 range
+                minpts_range = range(3,10)
 
                 for k in eps_range:
                     for j in minpts_range:
@@ -95,13 +94,15 @@ def cluster(st, df, method, name):
 
             max_index = S.index(max(S))
             best_comb = comb[max_index]
+            with open(comb_file, 'w') as f:
+                f.write(str(best_comb))
         st.write(f"The best performing model: {best_comb}")
         if method == 'DBSCAN':
             model = DBSCAN(eps=int(best_comb.split("|")[0])/100, min_samples=int(best_comb.split("|")[1]),
                            n_jobs=-1)
             result = model.fit(df.drop(['SepsisLabel'], axis=1))
         if method == 'k-means':
-            model = KMeans(init="random", n_clusters=best_comb, n_init=10, max_iter=300, random_state=42)
+            model = KMeans(init="random", n_clusters=int(best_comb), n_init=10, max_iter=300, random_state=42)
             result = model.fit(df.drop(['SepsisLabel'], axis=1))
         df['cluster'] = result.labels_
         df = df.sort_values(by=['SepsisLabel'])
@@ -111,14 +112,14 @@ def cluster(st, df, method, name):
 def analyze_cluster(st, df):
     st.write("Do we see a correlation with the label to find out if there are any clusters to be found")
     fig = plt.figure(figsize=(16, 6))
-    mask = np.triu(np.ones_like(df.corr(), dtype=np.bool))
-    corr = df.corr()
+    mask = np.triu(np.ones_like(df.corr().abs(), dtype=np.bool))
+    corr = df.corr().abs()
     heatmap = sns.heatmap(corr, mask=mask, vmin=-1, vmax=1, annot=True, cmap='viridis')
     heatmap.set_title('Correlation Heatmap')
     st.pyplot(fig)
     highest_corr = list(corr['cluster'].nlargest(4).index)
     highest_corr.remove('cluster')
-    st.write(f"The 3 features who are correlating the best with cluster are: {(',').join(highest_corr)}'")
+    st.write(f"The 3 features who are correlating the best with cluster are: {(',').join(highest_corr)}")
 
     # Create a 3D scatter plot
     fig = px.scatter_3d(df, x=df[highest_corr[0]], y=df[highest_corr[1]], z=df[highest_corr[2]],

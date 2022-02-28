@@ -18,17 +18,30 @@ def feature_selection(st, df, correlated=True, missing=True):
 
     return df
 
+def try_spline(x):
+    try:
+        return x.interpolate(method='spline', order=5, limit_direction='both')
+    except Exception:
+        return None
+
 def impute_data(st, df, method='linear'): # https://stackoverflow.com/questions/37057187/pandas-interpolate-within-a-groupby /
     # https://stackoverflow.com/questions/55718026/how-to-interpolate-missing-values-with-groupby
     st.write(f"Interpolating with the method: {method}")
-    df = df.groupby('patient').apply(lambda x: x.interpolate(method=method, limit_direction='both'))
+
+    if method=='linear':
+        df = df.groupby('patient').apply(lambda x: x.interpolate(method=method, limit_direction='both'))
+    elif method=='spline':
+        df = df.groupby('patient').apply(lambda x: try_spline(x))
+    else:
+        raise Exception("No correct method selected")
     st.write("")
     st.write("Let's make sure that we don't have any more missing values")
     missing = df.isnull().mean().round(4).mul(100).sort_values(ascending=False)
     st.write(missing)
     st.write("So we still have missing data, fill these in with the median values")
     for i in df.columns[df.isnull().any(axis=0)]: # https://stackoverflow.com/questions/37057187/pandas-interpolate-within-a-groupby
-        df[i].fillna(df[i].mean(),inplace=True)
+        if not(i == 'patient'):
+            df[i].fillna(df[i].mean(),inplace=True)
     st.write("")
     st.write("Do we have missing data now?")
     missing = df.isnull().mean().round(4).mul(100).sort_values(ascending=False)
@@ -59,10 +72,11 @@ def remove_missing(df, percentage=0.61): # https://stackoverflow.com/questions/4
 
 def scale(st, df):
     df['ts'] = df.groupby(['patient']).cumcount()
-    df.drop(['patient'], axis=1, inplace=True)
+    # df.drop(['patient'], axis=1, inplace=True)
     st.write(df.head(100))
     st.write("Let's scale the data and then we're done with the dataset")
     cols = list(df.columns)
+    cols.remove('patient')
     cols.remove('SepsisLabel')
     sc = MinMaxScaler()
     df[cols] = sc.fit_transform(df[cols])
@@ -72,7 +86,12 @@ def scale(st, df):
 def dimensionality_reduction(st, df, method='PaCMAP'):
     st.write(f"Let's use dimensionality reduction with the {method} method")
     df = df.head(500000)
+    st.write(df.head(100))
     df.dropna(inplace=True)
+    try:
+        df.drop('patient', axis=1, inplace=True)
+    except Exception:
+        print('patient not found in columns')
     if method == 'TriMAP':
         dr_df = trimap.TRIMAP(verbose=True).fit_transform(df.drop(['SepsisLabel'], axis=1).values)
     elif method == 'PaCMAP':
@@ -88,7 +107,7 @@ def dimensionality_reduction(st, df, method='PaCMAP'):
     return df
 
 def run_dr(st, input_df, name):
-    for impute_method in ['linear', 'none']:
+    for impute_method in ['linear','spline','none']:
         df = input_df.copy()
         fname_impute = f'data/imputed_{impute_method}_{name}.pkl'
         if os.path.isfile(fname_impute):
